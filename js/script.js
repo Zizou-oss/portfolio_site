@@ -274,4 +274,308 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
+
+    // --- NEW MASTERCLASS FEATURES ---
+
+    // 1. Custom Cursor
+    const cursor = document.querySelector('.cursor');
+    if (cursor) {
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px) translate(-50%, -50%)`;
+        });
+
+        const interactiveElements = document.querySelectorAll('a, button, input, textarea, .skill-card, .timeline-item');
+        interactiveElements.forEach(el => {
+            el.addEventListener('mouseenter', () => cursor.classList.add('hovered'));
+            el.addEventListener('mouseleave', () => cursor.classList.remove('hovered'));
+        });
+    }
+
+    // 2. Vanta.js 3D Background (Net Effect)
+    let vantaEffect = null;
+    if (window.VANTA) {
+        vantaEffect = window.VANTA.NET({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            color: 0x00f0ff,
+            backgroundColor: 0x050505,
+            points: 12.00,
+            maxDistance: 22.00,
+            spacing: 18.00
+        });
+    }
+
+    // Theme Toggle Logic
+    const themeToggle = document.getElementById('theme-toggle');
+    const updateVantaColors = (theme) => {
+        if (!vantaEffect) return;
+        if (theme === 'dark') {
+            vantaEffect.setOptions({
+                color: 0x00f0ff, // cyan
+                backgroundColor: 0x050505
+            });
+        } else {
+            vantaEffect.setOptions({
+                color: 0xff6b35, // orange
+                backgroundColor: 0xf6f3ef // light bg
+            });
+        }
+    };
+
+    const setTheme = (theme) => {
+        if (theme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+        }
+        localStorage.setItem('theme', theme);
+        updateVantaColors(theme);
+    };
+
+    // Initialize Theme (Default to Dark)
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    setTheme(savedTheme);
+
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        });
+    }
+
+    // 3. Assistant IA du portfolio
+    const chatRoot = document.querySelector('.ai-chat');
+    if (chatRoot) {
+        const chatToggle = chatRoot.querySelector('.ai-chat-toggle');
+        const chatPanel = chatRoot.querySelector('.ai-chat-panel');
+        const chatClose = chatRoot.querySelector('.ai-chat-close');
+        const chatForm = chatRoot.querySelector('.ai-chat-form');
+        const chatInput = chatRoot.querySelector('#ai-chat-input');
+        const chatMessages = chatRoot.querySelector('.ai-chat-messages');
+        const chatChips = chatRoot.querySelectorAll('.ai-chip');
+        const chatLaunchers = document.querySelectorAll('[data-open-chat]');
+        const chatSubmitButton = chatForm ? chatForm.querySelector('button[type="submit"]') : null;
+        let chatHistory = [];
+        let isChatLoading = false;
+        let pendingMessage = null;
+
+        const scrollChatToBottom = () => {
+            if (chatMessages) {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        };
+
+        const setChatOpen = (isOpen) => {
+            chatRoot.classList.toggle('is-open', isOpen);
+            if (chatToggle) {
+                chatToggle.setAttribute('aria-expanded', String(isOpen));
+            }
+            if (chatPanel) {
+                chatPanel.hidden = !isOpen;
+            }
+
+            if (isOpen && chatInput) {
+                window.requestAnimationFrame(() => {
+                    chatInput.focus();
+                    scrollChatToBottom();
+                });
+            }
+        };
+
+        const appendChatMessage = (role, text, pending = false) => {
+            if (!chatMessages) {
+                return null;
+            }
+
+            const message = document.createElement('article');
+            message.className = `ai-message ai-message-${role}`;
+            if (pending) {
+                message.classList.add('is-pending');
+            }
+
+            const paragraph = document.createElement('p');
+            paragraph.textContent = text;
+            message.appendChild(paragraph);
+            chatMessages.appendChild(message);
+            scrollChatToBottom();
+            return message;
+        };
+
+        const clearPendingMessage = () => {
+            if (pendingMessage) {
+                pendingMessage.remove();
+                pendingMessage = null;
+            }
+        };
+
+        const setChatLoading = (loading) => {
+            isChatLoading = loading;
+
+            if (chatInput) {
+                chatInput.disabled = loading;
+            }
+            if (chatSubmitButton) {
+                chatSubmitButton.disabled = loading;
+            }
+
+            chatChips.forEach(chip => {
+                chip.disabled = loading;
+            });
+
+            if (loading) {
+                pendingMessage = appendChatMessage('bot', 'Je reflechis...', true);
+            } else {
+                clearPendingMessage();
+            }
+        };
+
+        const sendQuestion = async (rawQuestion) => {
+            const question = rawQuestion.trim();
+
+            if (!question || isChatLoading) {
+                return;
+            }
+
+            setChatOpen(true);
+            appendChatMessage('user', question);
+
+            if (chatInput) {
+                chatInput.value = '';
+            }
+
+            setChatLoading(true);
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        question,
+                        history: chatHistory
+                    })
+                });
+
+                let payload = {};
+                try {
+                    payload = await response.json();
+                } catch (error) {
+                    payload = {};
+                }
+
+                if (!response.ok) {
+                    throw new Error(payload.error || 'Le service IA ne repond pas.');
+                }
+
+                chatHistory = [
+                    ...chatHistory,
+                    { role: 'user', parts: [{ text: question }] },
+                    {
+                        role: 'model',
+                        parts: Array.isArray(payload.parts) && payload.parts.length
+                            ? payload.parts
+                            : [{ text: payload.answer || '' }]
+                    }
+                ].slice(-10);
+                clearPendingMessage();
+                appendChatMessage('bot', payload.answer || "Je n'ai pas trouve de reponse fiable pour le moment.");
+            } catch (error) {
+                clearPendingMessage();
+                appendChatMessage('bot', "Le chat IA n'est pas disponible pour le moment. Reessaie un peu plus tard ou contacte-moi directement via WhatsApp ou e-mail.");
+            } finally {
+                setChatLoading(false);
+            }
+        };
+
+        if (chatToggle) {
+            chatToggle.addEventListener('click', () => {
+                const isOpen = chatToggle.getAttribute('aria-expanded') === 'true';
+                setChatOpen(!isOpen);
+            });
+        }
+
+        if (chatClose) {
+            chatClose.addEventListener('click', () => {
+                setChatOpen(false);
+            });
+        }
+
+        if (chatForm) {
+            chatForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                sendQuestion(chatInput ? chatInput.value : '');
+            });
+        }
+
+        chatChips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                sendQuestion(chip.dataset.question || chip.textContent || '');
+            });
+        });
+
+        chatLaunchers.forEach(button => {
+            button.addEventListener('click', () => {
+                setChatOpen(true);
+            });
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && chatPanel && !chatPanel.hidden) {
+                setChatOpen(false);
+            }
+        });
+    }
+
+    // 4. GSAP & ScrollTrigger Animations
+    if (window.gsap && window.ScrollTrigger) {
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Section Headers
+        gsap.utils.toArray('.section-head').forEach(head => {
+            gsap.from(head, {
+                scrollTrigger: {
+                    trigger: head,
+                    start: "top 85%",
+                    toggleActions: "play none none reverse"
+                },
+                y: 50,
+                opacity: 0,
+                duration: 0.8,
+                ease: "power3.out"
+            });
+        });
+
+        // About section
+        gsap.from(".about-media img", {
+            scrollTrigger: {
+                trigger: ".about",
+                start: "top 75%",
+                toggleActions: "play none none reverse"
+            },
+            scale: 0.8,
+            opacity: 0,
+            duration: 1,
+            ease: "back.out(1.5)"
+        });
+
+        gsap.from(".about-card", {
+            scrollTrigger: {
+                trigger: ".about-card",
+                start: "top 85%",
+                toggleActions: "play none none reverse"
+            },
+            x: 50,
+            opacity: 0,
+            duration: 0.8,
+            ease: "power3.out"
+        });
+    }
 });

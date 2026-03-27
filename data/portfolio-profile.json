@@ -1,0 +1,96 @@
+{
+  "identity": {
+    "full_name": "Abdoul Aziz THIOMBIANO",
+    "headline": "Developpeur Full-Stack",
+    "summary": "Etudiant en Licence 3 Informatique (BIT), option Programmation et Entrepreneuriat, avec un profil oriente web, mobile, API et IA.",
+    "location": "Koudougou, Burkina Faso",
+    "availability": "Ouvert aux stages, missions freelance et collaborations techniques."
+  },
+  "education": [
+    {
+      "period": "2023 - en cours",
+      "title": "Licence 3 Informatique",
+      "school": "Burkina Institute Of Technology (BIT)",
+      "details": "Option Programmation et Entrepreneuriat"
+    },
+    {
+      "period": "2022",
+      "title": "Bac D",
+      "school": "Centre de Formation Professionnel (CFP)",
+      "details": "Fada N'Gourma, Burkina Faso"
+    }
+  ],
+  "experience": [
+    {
+      "period": "08/2025 - aujourd'hui",
+      "role": "Developpeur Full-Stack",
+      "company": "Sidwaya",
+      "location": "Ouagadougou, Burkina Faso"
+    },
+    {
+      "period": "07/2025",
+      "role": "Deep Learning",
+      "company": "ODC",
+      "location": "Ouagadougou, Burkina Faso"
+    },
+    {
+      "period": "07/2025",
+      "role": "Developpeur Front-End",
+      "company": "ODC",
+      "location": "Ouagadougou, Burkina Faso"
+    }
+  ],
+  "skills": {
+    "frontend": ["HTML5", "CSS3", "JavaScript", "React"],
+    "backend": ["Laravel", "Flask", "Node.js", "Express"],
+    "mobile": ["Flutter", "Dart", "Android Studio"],
+    "databases": ["MySQL", "PostgreSQL", "MongoDB", "SQLite"],
+    "cloud_and_services": ["Supabase", "Firebase", "API REST", "Swagger"],
+    "ai_and_tools": ["TensorFlow", "LLM", "Git", "GitHub", "UML"]
+  },
+  "projects": [
+    {
+      "name": "2Block Music",
+      "period": "2026 - aujourd'hui",
+      "description": "Plateforme de streaming musical avec authentification et gestion securisee du contenu.",
+      "stack": ["Flutter", "Node.js", "MongoDB", "Supabase"],
+      "link": "https://2block-web-ctth.vercel.app/"
+    },
+    {
+      "name": "Generateur de Brief Musical (LLM)",
+      "period": "2026",
+      "description": "Systeme IA pour generer des briefs musicaux structures via prompt engineering.",
+      "stack": ["Python", "LLM", "Prompt Engineering"],
+      "link": "https://frontend-ai-qpdd-thiombianoa12-3779s-projects.vercel.app/"
+    },
+    {
+      "name": "Location APP",
+      "period": "2025",
+      "description": "Application mobile pour trouver et reserver des maisons en ligne.",
+      "stack": ["Flutter", "MongoDB", "Express", "Node.js"],
+      "link": "https://github.com/Zizou-oss/groupe5-location-app"
+    },
+    {
+      "name": "CRM CRUD",
+      "period": "2025",
+      "description": "Logiciel de gestion de la relation client avec operations CRUD completes.",
+      "stack": ["Laravel"],
+      "link": "https://github.com/Zizou-oss/Groupe_12"
+    },
+    {
+      "name": "Plateforme de Ressources Educatives",
+      "period": "2025",
+      "description": "Plateforme web de partage et d'acces a des ressources pedagogiques.",
+      "stack": ["Flask", "Bootstrap", "SQLite"]
+    }
+  ],
+  "languages": ["Francais", "Gourmantcheman", "Anglais", "Moore"],
+  "contact": {
+    "email": "thiombianoa12@gmail.com",
+    "phone": "+226 55 04 12 79",
+    "whatsapp": "https://wa.me/22655041279",
+    "website": "https://portfolio-site-eight-dusky.vercel.app/",
+    "github": "https://github.com/Zizou-oss",
+    "linkedin": "https://linkedin.com/in/abdoul-thiombiano-a1a20235"
+  }
+}
