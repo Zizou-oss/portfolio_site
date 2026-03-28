@@ -27,7 +27,12 @@ function sanitizeAnswer(text) {
     }
 
     return text
-        .replace(/[*`_#>-]/g, "")
+        .replace(/^\s{0,3}[-*+]\s+/gm, "")
+        .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+        .replace(/^>\s?/gm, "")
+        .replace(/\*\*/g, "")
+        .replace(/__/g, "")
+        .replace(/`{1,3}/g, "")
         .replace(/\r\n/g, "\n")
         .replace(/\n{3,}/g, "\n\n")
         .trim();
@@ -48,49 +53,100 @@ function normalizeHistory(history) {
     }
 
     return history
-        .map((item) => {
-            if (!item || (item.role !== "model" && item.role !== "user")) {
-                return null;
-            }
-
-            if (Array.isArray(item.parts) && item.parts.length) {
-                return {
-                    role: item.role,
-                    parts: item.parts
-                        .filter((part) => part && typeof part === "object")
-                        .map((part) => {
-                            const nextPart = {};
-
-                            if (typeof part.text === "string" && part.text.trim()) {
-                                nextPart.text = part.text.trim();
-                            }
-                            if (typeof part.thoughtSignature === "string" && part.thoughtSignature.trim()) {
-                                nextPart.thoughtSignature = part.thoughtSignature.trim();
-                            }
-                            if (part.functionCall && typeof part.functionCall === "object") {
-                                nextPart.functionCall = part.functionCall;
-                            }
-                            if (part.functionResponse && typeof part.functionResponse === "object") {
-                                nextPart.functionResponse = part.functionResponse;
-                            }
-
-                            return Object.keys(nextPart).length ? nextPart : null;
-                        })
-                        .filter(Boolean)
-                };
-            }
-
-            if (typeof item.text === "string" && item.text.trim()) {
-                return {
-                    role: item.role,
-                    parts: [{ text: item.text.trim() }]
-                };
-            }
-
-            return null;
-        })
-        .filter((item) => item && item.parts.length)
+        .filter((item) => item && (item.role === "model" || item.role === "user") && typeof item.text === "string" && item.text.trim())
+        .map((item) => ({
+            role: item.role,
+            parts: [{ text: item.text.trim() }]
+        }))
         .slice(-10);
+}
+
+function writeSseEvent(res, event, payload) {
+    res.write(`event: ${event}\n`);
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+}
+
+function getDeltaText(previousText, currentText) {
+    if (!currentText) {
+        return "";
+    }
+
+    if (!previousText) {
+        return currentText;
+    }
+
+    if (currentText.startsWith(previousText)) {
+        return currentText.slice(previousText.length);
+    }
+
+    return currentText;
+}
+
+async function streamGeminiToClient(geminiResponse, res) {
+    const reader = geminiResponse.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let accumulatedText = "";
+    let emittedText = "";
+
+    const processEventBlock = (block) => {
+        if (!block.trim()) {
+            return;
+        }
+
+        let rawData = "";
+
+        for (const line of block.split("\n")) {
+            if (line.startsWith("data:")) {
+                rawData += `${line.slice(5).trimStart()}\n`;
+            }
+        }
+
+        const data = rawData.trim();
+        if (!data || data === "[DONE]") {
+            return;
+        }
+
+        let payload;
+        try {
+            payload = JSON.parse(data);
+        } catch (error) {
+            return;
+        }
+
+        const nextText = sanitizeAnswer(extractOutputText(payload));
+        const delta = sanitizeAnswer(getDeltaText(accumulatedText, nextText));
+        accumulatedText = nextText || accumulatedText;
+
+        if (delta) {
+            emittedText += delta;
+            writeSseEvent(res, "chunk", { text: delta });
+        }
+    };
+
+    while (true) {
+        const { done, value } = await reader.read();
+        buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+        buffer = buffer.replace(/\r\n/g, "\n");
+
+        let separatorIndex = buffer.indexOf("\n\n");
+        while (separatorIndex !== -1) {
+            const eventBlock = buffer.slice(0, separatorIndex);
+            buffer = buffer.slice(separatorIndex + 2);
+            processEventBlock(eventBlock);
+            separatorIndex = buffer.indexOf("\n\n");
+        }
+
+        if (done) {
+            break;
+        }
+    }
+
+    if (buffer.trim()) {
+        processEventBlock(buffer);
+    }
+
+    return sanitizeAnswer(emittedText || accumulatedText);
 }
 
 async function getJsonBody(req) {
@@ -134,6 +190,7 @@ module.exports = async function handler(req, res) {
         const body = await getJsonBody(req);
         const question = typeof body.question === "string" ? body.question.trim() : "";
         const history = normalizeHistory(body.history);
+        const wantsStream = body.stream === true;
 
         if (!question) {
             return res.status(400).json({ error: "Question is required." });
@@ -161,7 +218,9 @@ module.exports = async function handler(req, res) {
             `CONTEXTE PROFIL JSON:\n${JSON.stringify(profile, null, 2)}`
         ].join("\n\n");
 
-        const geminiResponse = await fetch(`${GEMINI_API_BASE_URL}/${DEFAULT_MODEL}:generateContent`, {
+        const route = wantsStream ? "streamGenerateContent?alt=sse" : "generateContent";
+
+        const geminiResponse = await fetch(`${GEMINI_API_BASE_URL}/${DEFAULT_MODEL}:${route}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -181,7 +240,6 @@ module.exports = async function handler(req, res) {
                 generationConfig: {
                     maxOutputTokens: 320,
                     responseMimeType: "text/plain",
-                    temperature: 0.7,
                     thinkingConfig: {
                         thinkingLevel: "low"
                     }
@@ -194,17 +252,38 @@ module.exports = async function handler(req, res) {
             throw new Error(`Gemini error ${geminiResponse.status}: ${errorText}`);
         }
 
+        if (wantsStream) {
+            res.writeHead(200, {
+                "Content-Type": "text/event-stream; charset=utf-8",
+                "Cache-Control": "no-cache, no-transform",
+                Connection: "keep-alive",
+                "X-Accel-Buffering": "no"
+            });
+            res.flushHeaders?.();
+
+            const answer = await streamGeminiToClient(geminiResponse, res);
+            writeSseEvent(res, "done", { answer });
+            return res.end();
+        }
+
         const payload = await geminiResponse.json();
         const modelContent = extractModelContent(payload);
         const answer = sanitizeAnswer(extractOutputText(payload)) || "Je n'ai pas pu formuler une reponse fiable pour le moment. Tu peux utiliser le formulaire de contact ou WhatsApp pour continuer l'echange.";
 
         return res.status(200).json({
             answer,
-            parts: modelContent ? modelContent.parts : null,
             model: payload.model || DEFAULT_MODEL
         });
     } catch (error) {
         console.error("Chat API error:", error);
+
+        if (res.headersSent) {
+            writeSseEvent(res, "error", {
+                error: "Le chat IA est temporairement indisponible."
+            });
+            return res.end();
+        }
+
         return res.status(500).json({
             error: "Le chat IA est temporairement indisponible."
         });

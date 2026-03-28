@@ -364,7 +364,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const chatSubmitButton = chatForm ? chatForm.querySelector('button[type="submit"]') : null;
         let chatHistory = [];
         let isChatLoading = false;
-        let pendingMessage = null;
 
         const scrollChatToBottom = () => {
             if (chatMessages) {
@@ -408,13 +407,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return message;
         };
 
-        const clearPendingMessage = () => {
-            if (pendingMessage) {
-                pendingMessage.remove();
-                pendingMessage = null;
-            }
-        };
-
         const setChatLoading = (loading) => {
             isChatLoading = loading;
 
@@ -428,12 +420,121 @@ document.addEventListener('DOMContentLoaded', function() {
             chatChips.forEach(chip => {
                 chip.disabled = loading;
             });
+        };
 
-            if (loading) {
-                pendingMessage = appendChatMessage('bot', 'Je reflechis...', true);
-            } else {
-                clearPendingMessage();
+        const createStreamingMessage = () => {
+            if (!chatMessages) {
+                return null;
             }
+
+            const message = document.createElement('article');
+            message.className = 'ai-message ai-message-bot is-streaming';
+
+            const paragraph = document.createElement('p');
+            message.appendChild(paragraph);
+            chatMessages.appendChild(message);
+            scrollChatToBottom();
+
+            return { message, paragraph };
+        };
+
+        const applyStreamChunk = (streamTarget, textChunk) => {
+            if (!streamTarget || !streamTarget.paragraph || !textChunk) {
+                return;
+            }
+
+            streamTarget.paragraph.textContent += textChunk;
+            scrollChatToBottom();
+        };
+
+        const finalizeStreamMessage = (streamTarget) => {
+            if (streamTarget && streamTarget.message) {
+                streamTarget.message.classList.remove('is-streaming');
+            }
+        };
+
+        const consumeEventStream = async (response, streamTarget) => {
+            if (!response.body) {
+                throw new Error('Flux indisponible.');
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let finalAnswer = '';
+
+            const processEventBlock = (block) => {
+                if (!block.trim()) {
+                    return;
+                }
+
+                let eventName = 'message';
+                const dataLines = [];
+
+                for (const line of block.split('\n')) {
+                    if (line.startsWith('event:')) {
+                        eventName = line.slice(6).trim();
+                    } else if (line.startsWith('data:')) {
+                        dataLines.push(line.slice(5).trimStart());
+                    }
+                }
+
+                if (!dataLines.length) {
+                    return;
+                }
+
+                let payload = {};
+                try {
+                    payload = JSON.parse(dataLines.join('\n'));
+                } catch (error) {
+                    payload = {};
+                }
+
+                if (eventName === 'chunk' && typeof payload.text === 'string') {
+                    applyStreamChunk(streamTarget, payload.text);
+                    finalAnswer += payload.text;
+                    return;
+                }
+
+                if (eventName === 'done' && typeof payload.answer === 'string') {
+                    finalAnswer = payload.answer;
+                    if (streamTarget && streamTarget.paragraph) {
+                        streamTarget.paragraph.textContent = payload.answer;
+                    }
+                    finalizeStreamMessage(streamTarget);
+                    scrollChatToBottom();
+                    return;
+                }
+
+                if (eventName === 'error') {
+                    throw new Error(payload.error || 'Le service IA ne repond pas.');
+                }
+            };
+
+            while (true) {
+                const { done, value } = await reader.read();
+                buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+                buffer = buffer.replace(/\r\n/g, '\n');
+
+                let separatorIndex = buffer.indexOf('\n\n');
+                while (separatorIndex !== -1) {
+                    const eventBlock = buffer.slice(0, separatorIndex);
+                    buffer = buffer.slice(separatorIndex + 2);
+                    processEventBlock(eventBlock);
+                    separatorIndex = buffer.indexOf('\n\n');
+                }
+
+                if (done) {
+                    break;
+                }
+            }
+
+            if (buffer.trim()) {
+                processEventBlock(buffer);
+            }
+
+            finalizeStreamMessage(streamTarget);
+            return finalAnswer.trim();
         };
 
         const sendQuestion = async (rawQuestion) => {
@@ -451,44 +552,47 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             setChatLoading(true);
+            const streamTarget = createStreamingMessage();
 
             try {
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Accept': 'text/event-stream'
                     },
                     body: JSON.stringify({
                         question,
-                        history: chatHistory
+                        history: chatHistory,
+                        stream: true
                     })
                 });
 
-                let payload = {};
-                try {
-                    payload = await response.json();
-                } catch (error) {
-                    payload = {};
+                if (!response.ok) {
+                    let payload = {};
+                    try {
+                        payload = await response.json();
+                    } catch (error) {
+                        payload = {};
+                    }
+                    throw new Error(payload.error || 'Le service IA ne repond pas.');
                 }
 
-                if (!response.ok) {
-                    throw new Error(payload.error || 'Le service IA ne repond pas.');
+                const answer = await consumeEventStream(response, streamTarget);
+
+                if (!answer) {
+                    throw new Error('Reponse vide.');
                 }
 
                 chatHistory = [
                     ...chatHistory,
-                    { role: 'user', parts: [{ text: question }] },
-                    {
-                        role: 'model',
-                        parts: Array.isArray(payload.parts) && payload.parts.length
-                            ? payload.parts
-                            : [{ text: payload.answer || '' }]
-                    }
+                    { role: 'user', text: question },
+                    { role: 'model', text: answer }
                 ].slice(-10);
-                clearPendingMessage();
-                appendChatMessage('bot', payload.answer || "Je n'ai pas trouve de reponse fiable pour le moment.");
             } catch (error) {
-                clearPendingMessage();
+                if (streamTarget && streamTarget.message) {
+                    streamTarget.message.remove();
+                }
                 appendChatMessage('bot', "Le chat IA n'est pas disponible pour le moment. Reessaie un peu plus tard ou contacte-moi directement via WhatsApp ou e-mail.");
             } finally {
                 setChatLoading(false);

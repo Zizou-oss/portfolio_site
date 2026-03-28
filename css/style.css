@@ -1236,6 +1236,13 @@ html.js .timeline-item:nth-child(5) { transition-delay: 0.3s; }
     white-space: pre-wrap;
 }
 
+.ai-message.is-streaming p::after {
+    content: '|';
+    margin-left: 0.12rem;
+    color: var(--accent);
+    animation: blink 1s steps(2) infinite;
+}
+
 .ai-message-bot {
     justify-self: start;
     background: var(--bg-2);
