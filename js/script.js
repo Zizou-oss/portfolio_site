@@ -364,6 +364,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const chatSubmitButton = chatForm ? chatForm.querySelector('button[type="submit"]') : null;
         let chatHistory = [];
         let isChatLoading = false;
+        let streamFlushTimer = null;
 
         const scrollChatToBottom = () => {
             if (chatMessages) {
@@ -440,7 +441,20 @@ document.addEventListener('DOMContentLoaded', function() {
             chatMessages.appendChild(message);
             scrollChatToBottom();
 
-            return { message, paragraph, typing, hasStarted: false };
+            return { message, paragraph, typing, hasStarted: false, pendingText: '' };
+        };
+
+        const ensureStreamStarted = (streamTarget) => {
+            if (!streamTarget || streamTarget.hasStarted) {
+                return;
+            }
+
+            streamTarget.hasStarted = true;
+            streamTarget.message.classList.remove('is-awaiting');
+            if (streamTarget.typing) {
+                streamTarget.typing.remove();
+                streamTarget.typing = null;
+            }
         };
 
         const applyStreamChunk = (streamTarget, textChunk) => {
@@ -448,14 +462,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            if (!streamTarget.hasStarted) {
-                streamTarget.hasStarted = true;
-                streamTarget.message.classList.remove('is-awaiting');
-                if (streamTarget.typing) {
-                    streamTarget.typing.remove();
-                    streamTarget.typing = null;
-                }
-            }
+            ensureStreamStarted(streamTarget);
 
             streamTarget.paragraph.textContent += textChunk;
             scrollChatToBottom();
@@ -470,6 +477,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 streamTarget.typing.remove();
                 streamTarget.typing = null;
             }
+        };
+
+        const stopStreamFlush = () => {
+            if (streamFlushTimer) {
+                window.clearInterval(streamFlushTimer);
+                streamFlushTimer = null;
+            }
+        };
+
+        const queueStreamChunk = (streamTarget, textChunk) => {
+            if (!streamTarget || !textChunk) {
+                return;
+            }
+
+            streamTarget.pendingText += textChunk;
+
+            if (streamFlushTimer) {
+                return;
+            }
+
+            streamFlushTimer = window.setInterval(() => {
+                if (!streamTarget.pendingText) {
+                    stopStreamFlush();
+                    return;
+                }
+
+                const sliceSize = streamTarget.pendingText.length > 24 ? 3 : 2;
+                const nextSlice = streamTarget.pendingText.slice(0, sliceSize);
+                streamTarget.pendingText = streamTarget.pendingText.slice(sliceSize);
+                applyStreamChunk(streamTarget, nextSlice);
+
+                if (!streamTarget.pendingText) {
+                    stopStreamFlush();
+                }
+            }, 24);
         };
 
         const consumeEventStream = async (response, streamTarget) => {
@@ -510,17 +552,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 if (eventName === 'chunk' && typeof payload.text === 'string') {
-                    applyStreamChunk(streamTarget, payload.text);
+                    queueStreamChunk(streamTarget, payload.text);
                     finalAnswer += payload.text;
                     return;
                 }
 
                 if (eventName === 'done' && typeof payload.answer === 'string') {
                     finalAnswer = payload.answer;
+                    while (streamTarget && streamTarget.pendingText) {
+                        const nextSlice = streamTarget.pendingText.slice(0, 3);
+                        streamTarget.pendingText = streamTarget.pendingText.slice(3);
+                        applyStreamChunk(streamTarget, nextSlice);
+                    }
+                    stopStreamFlush();
                     if (streamTarget && streamTarget.paragraph) {
-                        if (!streamTarget.hasStarted) {
-                            streamTarget.hasStarted = true;
-                        }
+                        ensureStreamStarted(streamTarget);
                         streamTarget.paragraph.textContent = payload.answer;
                     }
                     finalizeStreamMessage(streamTarget);
@@ -555,6 +601,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 processEventBlock(buffer);
             }
 
+            while (streamTarget && streamTarget.pendingText) {
+                const nextSlice = streamTarget.pendingText.slice(0, 3);
+                streamTarget.pendingText = streamTarget.pendingText.slice(3);
+                applyStreamChunk(streamTarget, nextSlice);
+            }
+            stopStreamFlush();
             finalizeStreamMessage(streamTarget);
             return finalAnswer.trim();
         };
@@ -612,6 +664,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     { role: 'model', text: answer }
                 ].slice(-10);
             } catch (error) {
+                stopStreamFlush();
                 if (streamTarget && streamTarget.message) {
                     streamTarget.message.remove();
                 }

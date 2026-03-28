@@ -2,7 +2,7 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 
 const GEMINI_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
-const DEFAULT_MODEL = process.env.GEMINI_MODEL || "gemini-3-flash-preview";
+const DEFAULT_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
 
 function extractOutputText(payload) {
     const modelContent = extractModelContent(payload);
@@ -174,6 +174,29 @@ async function loadProfileContext() {
     return JSON.parse(raw);
 }
 
+function getGenerationConfig(model) {
+    const baseConfig = {
+        maxOutputTokens: 220,
+        responseMimeType: "text/plain"
+    };
+
+    if (model.startsWith("gemini-2.5-")) {
+        return {
+            ...baseConfig,
+            thinkingConfig: {
+                thinkingBudget: 0
+            }
+        };
+    }
+
+    return {
+        ...baseConfig,
+        thinkingConfig: {
+            thinkingLevel: "minimal"
+        }
+    };
+}
+
 module.exports = async function handler(req, res) {
     if (req.method !== "POST") {
         res.setHeader("Allow", "POST");
@@ -228,13 +251,7 @@ module.exports = async function handler(req, res) {
                         parts: [{ text: question }]
                     }
                 ],
-                generationConfig: {
-                    maxOutputTokens: 220,
-                    responseMimeType: "text/plain",
-                    thinkingConfig: {
-                        thinkingLevel: "minimal"
-                    }
-                }
+                generationConfig: getGenerationConfig(DEFAULT_MODEL)
             })
         });
 
