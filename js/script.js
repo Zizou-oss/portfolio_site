@@ -277,21 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- NEW MASTERCLASS FEATURES ---
 
-    // 1. Custom Cursor
-    const cursor = document.querySelector('.cursor');
-    if (cursor) {
-        document.addEventListener('mousemove', (e) => {
-            cursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px) translate(-50%, -50%)`;
-        });
-
-        const interactiveElements = document.querySelectorAll('a, button, input, textarea, .skill-card, .timeline-item');
-        interactiveElements.forEach(el => {
-            el.addEventListener('mouseenter', () => cursor.classList.add('hovered'));
-            el.addEventListener('mouseleave', () => cursor.classList.remove('hovered'));
-        });
-    }
-
-    // 2. Vanta.js 3D Background (Net Effect)
+    // 1. Vanta.js 3D Background (Net Effect)
     let vantaEffect = null;
     if (window.VANTA) {
         vantaEffect = window.VANTA.NET({
@@ -350,7 +336,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 3. Assistant IA du portfolio
+    // 2. Assistant IA du portfolio
     const chatRoot = document.querySelector('.ai-chat');
     if (chatRoot) {
         const chatToggle = chatRoot.querySelector('.ai-chat-toggle');
@@ -713,7 +699,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 4. GSAP & ScrollTrigger Animations
+    // 3. GSAP & ScrollTrigger Animations
     if (window.gsap && window.ScrollTrigger) {
         gsap.registerPlugin(ScrollTrigger);
 

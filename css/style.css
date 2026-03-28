@@ -61,8 +61,6 @@ body {
     color: var(--ink);
     background: var(--bg);
     line-height: 1.6;
-    /* remove cursor */
-    cursor: none;
 }
 
 body.no-scroll {
@@ -101,31 +99,6 @@ body::after {
     z-index: -1;
 }
 
-/* Custom Cursor */
-.cursor {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 20px;
-    height: 20px;
-    background: var(--accent-2);
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 9999;
-    mix-blend-mode: difference;
-    transform: translate(-50%, -50%);
-    transition: width 0.3s, height 0.3s, background 0.3s;
-}
-
-.cursor.hovered {
-    width: 60px;
-    height: 60px;
-    background: transparent;
-    border: 1px solid var(--accent);
-    mix-blend-mode: normal;
-}
-
-
 img {
     max-width: 100%;
     display: block;
@@ -133,10 +106,13 @@ img {
 
 a {
     color: inherit;
-    cursor: none; /* remove for custom cursor */
 }
-button, input, textarea {
-    cursor: none;
+button {
+    cursor: pointer;
+}
+
+input, textarea {
+    cursor: text;
 }
 
 .container {
