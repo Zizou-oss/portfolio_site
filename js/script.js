@@ -428,19 +428,33 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const message = document.createElement('article');
-            message.className = 'ai-message ai-message-bot is-streaming';
+            message.className = 'ai-message ai-message-bot is-streaming is-awaiting';
 
             const paragraph = document.createElement('p');
+            const typing = document.createElement('div');
+            typing.className = 'ai-typing';
+            typing.setAttribute('aria-hidden', 'true');
+            typing.innerHTML = '<span></span><span></span><span></span>';
             message.appendChild(paragraph);
+            message.appendChild(typing);
             chatMessages.appendChild(message);
             scrollChatToBottom();
 
-            return { message, paragraph };
+            return { message, paragraph, typing, hasStarted: false };
         };
 
         const applyStreamChunk = (streamTarget, textChunk) => {
             if (!streamTarget || !streamTarget.paragraph || !textChunk) {
                 return;
+            }
+
+            if (!streamTarget.hasStarted) {
+                streamTarget.hasStarted = true;
+                streamTarget.message.classList.remove('is-awaiting');
+                if (streamTarget.typing) {
+                    streamTarget.typing.remove();
+                    streamTarget.typing = null;
+                }
             }
 
             streamTarget.paragraph.textContent += textChunk;
@@ -450,6 +464,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const finalizeStreamMessage = (streamTarget) => {
             if (streamTarget && streamTarget.message) {
                 streamTarget.message.classList.remove('is-streaming');
+                streamTarget.message.classList.remove('is-awaiting');
+            }
+            if (streamTarget && streamTarget.typing) {
+                streamTarget.typing.remove();
+                streamTarget.typing = null;
             }
         };
 
@@ -499,6 +518,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (eventName === 'done' && typeof payload.answer === 'string') {
                     finalAnswer = payload.answer;
                     if (streamTarget && streamTarget.paragraph) {
+                        if (!streamTarget.hasStarted) {
+                            streamTarget.hasStarted = true;
+                        }
                         streamTarget.paragraph.textContent = payload.answer;
                     }
                     finalizeStreamMessage(streamTarget);

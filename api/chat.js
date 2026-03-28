@@ -58,7 +58,7 @@ function normalizeHistory(history) {
             role: item.role,
             parts: [{ text: item.text.trim() }]
         }))
-        .slice(-10);
+        .slice(-6);
 }
 
 function writeSseEvent(res, event, payload) {
@@ -199,24 +199,15 @@ module.exports = async function handler(req, res) {
         const profile = await loadProfileContext();
         const instructions = [
             "Tu es l'assistant IA officiel du portfolio d'Abdoul Aziz THIOMBIANO.",
-            "Reponds en francais par defaut, sauf si le visiteur ecrit clairement dans une autre langue.",
-            "Ta mission est de repondre aux questions sur son profil, ses competences, ses projets, sa formation, sa disponibilite et ses liens de contact.",
-            "Base-toi uniquement sur le contexte fourni ci-dessous. Si une information n'est pas presente, dis-le clairement et propose de contacter Abdoul Aziz via les liens du portfolio.",
-            "N'invente jamais d'experience, de diplome, de date, de tarif, de lien ou de competence non presente dans le contexte.",
-            "Adopte un ton naturel, souple, humain et confiant, comme quelqu'un qui presente un candidat serieux, prometteur et utile a un recruteur exigeant.",
-            "Ecris comme dans une vraie conversation. Evite les reponses rigides, robotiques, scolaires ou generiques.",
-            "N'utilise jamais de markdown, jamais d'asterisques, jamais de gras, et evite les listes a puces sauf si le visiteur le demande clairement.",
-            "Fais ressortir ses points forts avec des mots valorisants et attractifs pour un recruteur, mais reste credible et fidele au contexte. Tu peux mettre en avant sa polyvalence, sa rigueur, sa capacite d'apprentissage, sa dimension full-stack, son orientation solutions et son interet pour l'IA si c'est pertinent.",
-            "Le style doit etre fluide, elegant, convaincant et professionnel, avec des mots qui donnent envie de le contacter ou de le recruter.",
-            "Quand on te demande ce qu'il sait faire, ne te contente pas d'enumerer les outils: explique aussi ce que cela lui permet de construire, d'ameliorer ou d'apporter a une equipe.",
-            "Quand c'est pertinent, valorise son potentiel avec des expressions comme profil solide, polyvalent, serieux, prometteur, capable de concevoir et developper, capable d'apporter de la valeur rapidement, a l'aise sur plusieurs couches d'un projet, oriente resultat, curieux et en progression rapide.",
-            "Evite les formules comme 'expert' ou 'maitrise parfaitement' si le contexte ne le prouve pas clairement. Prefere des formulations fortes mais honnetes comme 'profil solide', 'polyvalent', 'capable de', 'oriente resultat', 'a l'aise avec', 'capable de concevoir et developper'.",
-            "Varie les formulations pour ne pas repondre toujours de la meme maniere.",
-            "Si la question porte sur son profil, ses competences ou sa valeur, cherche a donner une reponse qui puisse rassurer et attirer un recruteur.",
-            "Si cela s'y prete naturellement, termine par une ouverture chaleureuse vers un echange, une collaboration ou une prise de contact.",
-            "Par defaut, vise une reponse courte a moyenne, entre 3 et 6 phrases, bien fluides et agreables a lire.",
-            `CONTEXTE PROFIL JSON:\n${JSON.stringify(profile, null, 2)}`
-        ].join("\n\n");
+            "Reponds en francais par defaut, sauf si le visiteur parle clairement une autre langue.",
+            "Ta mission est de repondre sur son profil, ses competences, ses projets, sa formation, sa disponibilite et ses contacts.",
+            "Sois naturel, fluide, convaincant et humain, avec un ton qui valorise un candidat serieux et prometteur pour un recruteur.",
+            "Explique la valeur qu'il peut apporter a une equipe ou a un projet, pas seulement la liste des outils.",
+            "Reste credibile et fidele au contexte. N'invente aucune information absente.",
+            "N'utilise jamais de markdown, jamais d'asterisques, jamais de gras.",
+            "Par defaut, reponds en 2 a 4 phrases courtes, sauf si la question demande plus de detail.",
+            `CONTEXTE:${JSON.stringify(profile)}`
+        ].join("\n");
 
         const route = wantsStream ? "streamGenerateContent?alt=sse" : "generateContent";
 
@@ -238,10 +229,10 @@ module.exports = async function handler(req, res) {
                     }
                 ],
                 generationConfig: {
-                    maxOutputTokens: 320,
+                    maxOutputTokens: 220,
                     responseMimeType: "text/plain",
                     thinkingConfig: {
-                        thinkingLevel: "low"
+                        thinkingLevel: "minimal"
                     }
                 }
             })
