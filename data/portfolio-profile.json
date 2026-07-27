@@ -1,17 +1,23 @@
 {
   "identity": {
     "full_name": "Abdoul Aziz THIOMBIANO",
-    "headline": "Developpeur Full-Stack",
-    "summary": "Etudiant en Licence 3 Informatique (BIT), option Programmation et Entrepreneuriat, avec un profil oriente web, mobile, API et IA.",
-    "location": "Koudougou, Burkina Faso",
+    "headline": "Développeur Full-Stack",
+    "summary": "Étudiant en Licence 3 Informatique (en cours), je dispose de solides bases en algorithmique, en programmation et en analyse de problèmes informatiques. Sérieux, rigoureux et doté d’une bonne capacité d’apprentissage, je souhaite mettre mes compétences au service de projets concrets tout en développant mon expérience professionnelle au sein d’une équipe technique.",
+    "location": "Ouagadougou, Burkina Faso",
     "availability": "Ouvert aux stages, missions freelance et collaborations techniques."
   },
   "education": [
     {
-      "period": "2023 - en cours",
-      "title": "Licence 3 Informatique",
+      "period": "10/2025 – aujourd'hui",
+      "title": "Projet de fin d'année (Mémoire) - SmartBooking AI",
+      "school": "Burkina Institute of Technology",
+      "details": "Informatique option Programmation et Entrepreneuriat · Koudougou"
+    },
+    {
+      "period": "2023 – En cours",
+      "title": "Troisième année d'informatique (Licence 3)",
       "school": "Burkina Institute Of Technology (BIT)",
-      "details": "Option Programmation et Entrepreneuriat"
+      "details": "Informatique option Programmation et Entrepreneuriat · Koudougou, Burkina Faso"
     },
     {
       "period": "2022",
@@ -22,69 +28,96 @@
   ],
   "experience": [
     {
-      "period": "08/2025 - aujourd'hui",
-      "role": "Developpeur Full-Stack",
+      "period": "07/2026 – aujourd'hui",
+      "role": "Stage de perfectionnement",
+      "company": "AvePlus Sarl",
+      "location": "Ouagadougou, Burkina Faso"
+    },
+    {
+      "period": "03/2026 – 03/2026",
+      "role": "n8n",
+      "company": "Orange Digital Center",
+      "location": "Ouagadougou, Burkina Faso"
+    },
+    {
+      "period": "08/2025 – En cours",
+      "role": "Développeur Full-Stack",
       "company": "Sidwaya",
       "location": "Ouagadougou, Burkina Faso"
     },
     {
-      "period": "07/2025",
+      "period": "07/2025 – 07/2025",
       "role": "Deep Learning",
-      "company": "ODC",
+      "company": "Orange Digital Center",
       "location": "Ouagadougou, Burkina Faso"
     },
     {
-      "period": "07/2025",
-      "role": "Developpeur Front-End",
-      "company": "ODC",
+      "period": "07/2025 – 07/2025",
+      "role": "Développeur Front-End",
+      "company": "Orange Digital Center",
       "location": "Ouagadougou, Burkina Faso"
     }
   ],
   "skills": {
-    "frontend": ["HTML5", "CSS3", "JavaScript", "React"],
-    "backend": ["Laravel", "Flask", "Node.js", "Express"],
+    "frontend": ["HTML5", "CSS3", "JavaScript", "TypeScript", "React", "Next.js", "Bootstrap"],
+    "backend": ["Node.js", "Express", "Laravel", "Flask", "Java SpringBoot", "n8n"],
     "mobile": ["Flutter", "Dart", "Android Studio"],
     "databases": ["MySQL", "PostgreSQL", "MongoDB", "SQLite"],
-    "cloud_and_services": ["Supabase", "Firebase", "API REST", "Swagger"],
-    "ai_and_tools": ["TensorFlow", "LLM", "Git", "GitHub", "UML"]
+    "cloud_and_services": ["Supabase", "Firebase", "API REST", "Swagger", "Vercel", "Render", "Railway", "VPS"],
+    "ai_and_tools": ["TensorFlow", "LLM", "Git", "GitHub", "GitLab", "Bitrix", "UML", "Docker", "VS Code", "IntelliJ", "Antigravity"]
   },
   "projects": [
     {
-      "name": "2Block Music",
-      "period": "2026 - aujourd'hui",
-      "description": "Plateforme de streaming musical avec authentification et gestion securisee du contenu.",
-      "stack": ["Flutter", "Node.js", "MongoDB", "Supabase"],
-      "link": "https://2block-web-ctth.vercel.app/"
+      "name": "SmartBooking Ai",
+      "period": "aujourd'hui",
+      "description": "Chat bot Whatsapp de réservation et de commande.",
+      "stack": ["WhatsApp API", "Node.js", "LLM"],
+      "link": "https://smartbookingia.online/"
     },
     {
-      "name": "Generateur de Brief Musical (LLM)",
+      "name": "Site Web Pour AvePlus SARL",
+      "period": "aujourd'hui",
+      "description": "Proposition d'un site responsive et performant à AvePlus.",
+      "stack": ["HTML5", "CSS3", "JavaScript"],
+      "link": "https://saabsoft-website-clone.vercel.app/"
+    },
+    {
+      "name": "Generateur de Dévis (TH Déco)",
+      "period": "06/2026",
+      "description": "Plateforme & PWA en ligne et hors ligne de génération de devis.",
+      "stack": ["PWA", "HTML5", "CSS3", "JavaScript"],
+      "link": "https://th-deco.vercel.app/"
+    },
+    {
+      "name": "Gestionnaire de Buvette Desktop",
+      "period": "05/2026",
+      "description": "Logiciel de gestion de buvette pour bureau.",
+      "stack": ["Java", "Desktop", "SQLite"],
+      "link": "https://github.com/Zizou-oss/Buvette-Desktop"
+    },
+    {
+      "name": "Générateur de Brief Musical (LLM)",
       "period": "2026",
-      "description": "Systeme IA pour generer des briefs musicaux structures via prompt engineering.",
+      "description": "Système IA pour générer des briefs musicaux structurés via prompt engineering.",
       "stack": ["Python", "LLM", "Prompt Engineering"],
       "link": "https://frontend-ai-qpdd-thiombianoa12-3779s-projects.vercel.app/"
     },
     {
-      "name": "Location APP",
+      "name": "2Block Music (v1.3.1)",
+      "period": "2026",
+      "description": "Application téléchargeable depuis le site avec streaming et authentification.",
+      "stack": ["Flutter", "Node.js", "MongoDB", "Supabase"],
+      "link": "https://2block-web-ctth.vercel.app/"
+    },
+    {
+      "name": "PropiFlow",
       "period": "2025",
-      "description": "Application mobile pour trouver et reserver des maisons en ligne.",
-      "stack": ["Flutter", "MongoDB", "Express", "Node.js"],
+      "description": "Application mobile pour trouver et réserver des maisons en ligne.",
+      "stack": ["Flutter", "Supabase", "Express", "Node.js"],
       "link": "https://github.com/Zizou-oss/groupe5-location-app"
-    },
-    {
-      "name": "CRM CRUD",
-      "period": "2025",
-      "description": "Logiciel de gestion de la relation client avec operations CRUD completes.",
-      "stack": ["Laravel"],
-      "link": "https://github.com/Zizou-oss/Groupe_12"
-    },
-    {
-      "name": "Plateforme de Ressources Educatives",
-      "period": "2025",
-      "description": "Plateforme web de partage et d'acces a des ressources pedagogiques.",
-      "stack": ["Flask", "Bootstrap", "SQLite"]
     }
   ],
-  "languages": ["Francais", "Gourmantcheman", "Anglais", "Moore"],
+  "languages": ["Français", "Gourmantchéman", "Anglais", "Mooré"],
   "contact": {
     "email": "thiombianoa12@gmail.com",
     "phone": "+226 55 04 12 79",

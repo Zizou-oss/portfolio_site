@@ -194,49 +194,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Animation d'apparition des cartes projets
-    const timelineItems = document.querySelectorAll('.timeline-item');
-    if (timelineItems.length) {
+    // Animation d'apparition des cartes et métriques (Surprise / 3D Reveal)
+    const animateElements = document.querySelectorAll('.skill-card, .project-repo-card, .journey-card, .metric');
+    if (animateElements.length) {
         if ('IntersectionObserver' in window) {
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         entry.target.classList.add('is-visible');
                     } else {
+                        // Enlever is-visible si on veut rejouer l'animation, ou la laisser
+                        // L'enlever rend l'effet plus interactif au scroll
                         entry.target.classList.remove('is-visible');
                     }
                 });
             }, {
-                threshold: 0.25,
-                rootMargin: '0px 0px -10% 0px'
+                threshold: 0.1,
+                rootMargin: '0px 0px -5% 0px'
             });
             
-            timelineItems.forEach(item => observer.observe(item));
+            animateElements.forEach(item => observer.observe(item));
         } else {
-            timelineItems.forEach(item => item.classList.add('is-visible'));
-        }
-    }
-
-    // Animation d'apparition des compétences
-    const skillCards = document.querySelectorAll('.skill-card');
-    if (skillCards.length) {
-        if ('IntersectionObserver' in window) {
-            const skillsObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('is-visible');
-                    } else {
-                        entry.target.classList.remove('is-visible');
-                    }
-                });
-            }, {
-                threshold: 0.2,
-                rootMargin: '0px 0px -10% 0px'
-            });
-            
-            skillCards.forEach(item => skillsObserver.observe(item));
-        } else {
-            skillCards.forEach(item => item.classList.add('is-visible'));
+            animateElements.forEach(item => item.classList.add('is-visible'));
         }
     }
     
