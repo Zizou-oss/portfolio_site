@@ -1385,7 +1385,7 @@ html.js .timeline-item:nth-child(5) { transition-delay: 0.3s; }
 }
 
 /* Mobile */
-@media (max-width: 992px) {
+@media (max-width: 1150px) {
     .main-nav {
         position: fixed;
         top: 0;
@@ -1419,6 +1419,10 @@ html.js .timeline-item:nth-child(5) { transition-delay: 0.3s; }
     }
 
     .header-actions {
+        margin-left: auto;
+    }
+    
+    .header-actions .btn:not(.theme-toggle) {
         display: none;
     }
 

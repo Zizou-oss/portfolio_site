@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Fermer le menu lors du redimensionnement de la fenêtre (passage en desktop)
     window.addEventListener('resize', function() {
-        if (window.innerWidth > 992 && mainNav.classList.contains('nav-open')) {
+        if (window.innerWidth > 1150 && mainNav.classList.contains('nav-open')) {
             closeMenu();
         }
     });
@@ -303,8 +303,8 @@ document.addEventListener('DOMContentLoaded', function() {
         updateVantaColors(theme);
     };
 
-    // Initialize Theme (Default to Dark)
-    const savedTheme = localStorage.getItem('theme') || 'dark';
+    // Initialize Theme (Default to Light)
+    const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
 
     if (themeToggle) {
