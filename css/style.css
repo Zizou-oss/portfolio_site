@@ -1470,14 +1470,14 @@ html.js .timeline-item:nth-child(5) { transition-delay: 0.3s; }
     }
 
     .ai-chat {
-        left: 1rem;
         right: 1rem;
-        justify-items: stretch;
+        bottom: 1rem;
+        left: auto;
+        justify-items: end;
     }
 
-    .ai-chat-toggle,
     .ai-chat-panel {
-        width: 100%;
+        width: min(390px, calc(100vw - 2rem));
     }
 
     .ai-chat-form {
