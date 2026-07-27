@@ -13,12 +13,12 @@ function extractOutputText(payload) {
     const chunks = [];
 
     for (const part of modelContent.parts) {
-        if (typeof part.text === "string" && part.text.trim()) {
-            chunks.push(part.text.trim());
+        if (typeof part.text === "string") {
+            chunks.push(part.text);
         }
     }
 
-    return chunks.join("\n").trim();
+    return chunks.join("\n");
 }
 
 function sanitizeAnswer(text) {
