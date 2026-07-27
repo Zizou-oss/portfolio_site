@@ -27,9 +27,6 @@ function sanitizeAnswer(text) {
     }
 
     return text
-        .replace(/^\s{0,3}[-*+]\s+/gm, "")
-        .replace(/^\s{0,3}#{1,6}\s+/gm, "")
-        .replace(/^>\s?/gm, "")
         .replace(/\*\*/g, "")
         .replace(/__/g, "")
         .replace(/`{1,3}/g, "")
@@ -114,13 +111,17 @@ async function streamGeminiToClient(geminiResponse, res) {
             return;
         }
 
-        const nextText = sanitizeAnswer(extractOutputText(payload));
-        const delta = sanitizeAnswer(getDeltaText(accumulatedText, nextText));
+        const nextText = extractOutputText(payload);
+        const delta = getDeltaText(accumulatedText, nextText);
         accumulatedText = nextText || accumulatedText;
 
         if (delta) {
-            emittedText += delta;
-            writeSseEvent(res, "chunk", { text: delta });
+            const cleanDelta = delta
+                .replace(/\*\*/g, "")
+                .replace(/__/g, "")
+                .replace(/`{1,3}/g, "");
+            emittedText += cleanDelta;
+            writeSseEvent(res, "chunk", { text: cleanDelta });
         }
     };
 
@@ -226,8 +227,10 @@ module.exports = async function handler(req, res) {
             "Ta mission est de repondre sur son profil, ses competences, ses projets, sa formation, sa disponibilite et ses contacts.",
             "Sois naturel, fluide, convaincant et humain, avec un ton qui valorise un candidat serieux et prometteur pour un recruteur.",
             "Explique la valeur qu'il peut apporter a une equipe ou a un projet, pas seulement la liste des outils.",
-            "Reste credibile et fidele au contexte. N'invente aucune information absente.",
-            "N'utilise jamais de markdown, jamais d'asterisques, jamais de gras.",
+            "Reste credible et fidele au contexte. N'invente aucune information absente.",
+            "N'utilise jamais de markdown (pas d'asterisques, pas de gras).",
+            "Pour structurer tes listes, utilise des tirets simples (-) et saute une ligne apres chaque element.",
+            "Aere ton texte en sautant une ligne double (\\n\\n) entre chaque paragraphe. Ne colle jamais des paragraphes ou des listes de texte.",
             "Par defaut, reponds en 2 a 4 phrases courtes, sauf si la question demande plus de detail.",
             `CONTEXTE:${JSON.stringify(profile)}`
         ].join("\n");
